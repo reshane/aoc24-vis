@@ -147,7 +147,7 @@ async fn run() -> Result<(), JsValue> {
 
     let g = f.clone();
     {
-        let mut warehouse = parse_input(INPUT);
+        let mut warehouse = w_parse_input(INPUT);
         let (w, h) = warehouse.size;
         let canvas = canvas();
         console::log_1(&w.into());
@@ -176,7 +176,7 @@ async fn run() -> Result<(), JsValue> {
     Ok(())
 }
 
-fn draw_warehouse(canvas: &HtmlCanvasElement, warehouse: &Warehouse, width: u32, height: u32) {
+fn draw_warehouse(canvas: &HtmlCanvasElement, warehouse: &WWarehouse, width: u32, height: u32) {
     let ctx = canvas.get_context("2d")
         .unwrap()
         .unwrap()
@@ -187,21 +187,28 @@ fn draw_warehouse(canvas: &HtmlCanvasElement, warehouse: &Warehouse, width: u32,
     for row in 0..=height {
         for col in 0..=width {
             ctx.set_fill_style_str(EMPTY_COLOR);
-            if warehouse.walls.contains(&(row as i64, col as i64)) {
+            if warehouse.walls.contains(&(col as i64, row as i64)) {
                 ctx.set_fill_style_str(WALL_COLOR);
             }
-            if warehouse.boxes.contains(&(row as i64, col as i64)) {
-                ctx.set_fill_style_str(BOX_COLOR);
-            }
-            if warehouse.robot == (row as i64, col as i64) {
+            if warehouse.robot == (col as i64, row as i64) {
                 ctx.set_fill_style_str(ROBOT_COLOR);
             }
+            if warehouse.boxes.contains(&(col as i64, row as i64)) {
+                ctx.set_fill_style_str(BOX_COLOR);
+                ctx.fill_rect(
+                    (col * (CELL_SIZE + 1) + 2 + CELL_SIZE) as f64,
+                    (row * (CELL_SIZE + 1) + 1) as f64,
+                    CELL_SIZE as f64, CELL_SIZE as f64
+                );
+            }
 
-            ctx.fill_rect(
-                (col * (CELL_SIZE + 1) + 1) as f64,
-                (row * (CELL_SIZE + 1) + 1) as f64,
-                CELL_SIZE as f64, CELL_SIZE as f64
-            );
+            if !warehouse.boxes.contains(&(col as i64 - 1, row as i64)) {
+                ctx.fill_rect(
+                    (col * (CELL_SIZE + 1) + 1) as f64,
+                    (row * (CELL_SIZE + 1) + 1) as f64,
+                    CELL_SIZE as f64, CELL_SIZE as f64
+                );
+            }
         }
     }
 }
@@ -230,45 +237,15 @@ fn draw_grid(canvas: &HtmlCanvasElement, width: u32, height: u32) {
     ctx.stroke();
 }
 
-/*
 #[derive(Debug, Default)]
 struct WWarehouse {
     dims: Pos,
+    size: (u32, u32),
     walls: HashSet<Pos>,
     boxes: HashSet<Pos>,
     robot: Pos,
     moves: Vec<Dir>,
 }
-
-
-impl Display for WWarehouse {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        let mut y = 0;
-        while y <= self.dims.1 {
-            let mut x = 0;
-            while x <= self.dims.0 {
-                if self.walls.contains(&(x, y)) {
-                    let _ = write!(f, "#");
-                } else if self.boxes.contains(&(x, y)) {
-                    let _ = write!(f, "[]");
-                    x += 1;
-                } else if self.robot == (x, y) {
-                    let _ = write!(f, "@");
-                } else {
-                    let _ = write!(f, ".");
-                }
-                x += 1;
-            }
-            let _  = write!(f, "\n");
-            y += 1;
-        }
-        if !self.moves.is_empty() {
-            let _ = write!(f, "{:?}", self.moves[0]);
-        }
-        Ok(())
-    }
-}
-
 
 fn w_parse_input(contents: &str) -> WWarehouse {
     let split = contents.split("\n\n").collect::<Vec<&str>>();
@@ -276,12 +253,15 @@ fn w_parse_input(contents: &str) -> WWarehouse {
     let dir_str = split[1];
 
     let mut dims = (0, 0);
+    let (mut rows, mut cols) = (0, 0);
 
     let mut warehouse = WWarehouse::default();
 
     for (y, line) in map_str.lines().filter(|line| { !line.is_empty() }).enumerate() {
         dims.1 = y as i64;
+        rows = y as u32;
         for (x, c) in line.chars().enumerate() {
+            cols = x as u32;
             let x = x * 2;
             dims.0 = x as i64 + 1;
             match c {
@@ -304,6 +284,7 @@ fn w_parse_input(contents: &str) -> WWarehouse {
     }
 
     warehouse.dims = dims;
+    warehouse.size = ((cols + 1) * 2, rows + 1);
 
     dir_str.chars()
         .filter_map(|c| {
@@ -425,19 +406,3 @@ impl WWarehouse {
         }
     }
 }
-
-fn solve_p2(contents: String) -> i64 {
-    let mut w_warehouse = w_parse_input(contents);
-    // println!("{w_warehouse}");
-    while !w_warehouse.moves.is_empty() {
-        w_warehouse.step();
-        // println!("{w_warehouse}");
-    }
-    w_warehouse.boxes
-        .iter()
-        .fold(0, |acc, b| {
-            acc + (b.1 * 100) + b.0
-        })
-}
-
-*/
