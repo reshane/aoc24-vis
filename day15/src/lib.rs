@@ -113,7 +113,7 @@ impl Warehouse {
 }
 
 const GRID_COLOR: &'static str = "#CCCCCC";
-const CELL_SIZE: u32 = 5;
+const CELL_SIZE: u32 = 10;
 const WALL_COLOR: &'static str  = "#FFFFFF";
 const BOX_COLOR: &'static str = "#005500";
 const EMPTY_COLOR: &'static str = "#000000";
