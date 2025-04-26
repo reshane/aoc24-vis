@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["day15", "day16"]
+members = ["day15", "day16", "maze-gen"]
 
 [profile.release]
 lto = true

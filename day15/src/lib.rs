@@ -190,6 +190,9 @@ fn draw_warehouse(canvas: &HtmlCanvasElement, warehouse: &WWarehouse, width: u32
             if warehouse.walls.contains(&(col as i64, row as i64)) {
                 ctx.set_fill_style_str(WALL_COLOR);
             }
+            if warehouse.boxes.contains(&(col as i64, row as i64)) {
+                ctx.set_fill_style_str(BOX_COLOR);
+            }
             if warehouse.robot == (col as i64, row as i64) {
                 ctx.set_fill_style_str(ROBOT_COLOR);
             }
