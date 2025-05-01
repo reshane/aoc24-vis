@@ -1,10 +1,8 @@
 use wasm_bindgen::prelude::*;
 use std::{cell::RefCell, rc::Rc};
 use web_sys::HtmlCanvasElement;
-use web_sys::console;
 use std::collections::HashSet;
 
-const GRID_COLOR: &'static str = "#CCCCCC";
 const CELL_SIZE: u32 = 5;
 const PATH_COLOR: &'static str = "#00AA00";
 
@@ -43,7 +41,6 @@ async fn run() -> Result<(), JsValue> {
         canvas.set_attribute("height", format!("{}", (CELL_SIZE + 1) * (2 * h - 1) + 2).as_str())?;
         *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
             draw_maze(&canvas, &maze);
-            // draw_grid(&canvas, w, h);
             maze.step();
             request_animation_frame(f.borrow().as_ref().unwrap());
         }) as Box<dyn FnMut()>));
@@ -90,7 +87,6 @@ impl MazeBuilder {
             })
             .flatten()
             .collect::<HashSet<Point>>();
-        console::log_1(&format!("{:?} {:?}", untouched.len(), width * height).into());
         let start = (0_i64, 0_i64);
         let path_cells = vec![start].into_iter().collect::<HashSet<Point>>();
         Self {
@@ -192,51 +188,6 @@ fn draw_maze(canvas: &HtmlCanvasElement, maze: &MazeBuilder) {
         .unwrap();
     ctx.begin_path();
 
-    /*
-    for row in 0..maze.height {
-        for col in 0..maze.width {
-            ctx.set_fill_style_str(WALL_COLOR);
-            match maze.path_cells.get(&(col as i64, row as i64)) {
-                Some(_) => {
-                    ctx.set_fill_style_str(EMPTY_COLOR);
-                },
-                None => {},
-            }
-
-            let nbors = maze.get_nbors(&(col as i64, row as i64));
-            for nbor in nbors {
-                let row = row as i64;
-                let col = col as i64;
-                if maze.edges.contains(&((col, row), nbor)) {
-                    let x = std::cmp::min(col, nbor.0);
-                    let y = std::cmp::min(row, nbor.1);
-                    let w = if col == nbor.0 {
-                        CELL_SIZE
-                    } else {
-                        (CELL_SIZE * 3) + 2
-                    };
-                    let h = if row == nbor.1 {
-                        CELL_SIZE
-                    } else {
-                        (CELL_SIZE * 3) + 2
-                    };
-                    ctx.fill_rect(
-                        2_f64 * (x as u32 * (CELL_SIZE + 1) + 1) as f64,
-                        2_f64 * (y as u32 * (CELL_SIZE + 1) + 1) as f64,
-                        w as f64, h as f64
-                    );
-
-                }
-            }
-
-            ctx.fill_rect(
-                2_f64 * (col as u32 * (CELL_SIZE + 1) + 1) as f64,
-                2_f64 * (row as u32 * (CELL_SIZE + 1) + 1) as f64,
-                CELL_SIZE as f64, CELL_SIZE as f64
-            );
-        }
-    }*/
-
     ctx.set_fill_style_str(PATH_COLOR);
     for ((x1, y1), (x2, y2)) in maze.edges.iter() {
         let x = std::cmp::min(x1, x2);
@@ -259,26 +210,3 @@ fn draw_maze(canvas: &HtmlCanvasElement, maze: &MazeBuilder) {
     }
 }
 
-fn draw_grid(canvas: &HtmlCanvasElement, width: u32, height: u32) {
-    let ctx = canvas.get_context("2d")
-        .unwrap()
-        .unwrap()
-        .dyn_into::<web_sys::CanvasRenderingContext2d>()
-        .unwrap();
-    ctx.begin_path();
-    ctx.set_stroke_style_str(GRID_COLOR);
-
-    // Vertical lines
-    for i in 0..=(2*width) {
-        ctx.move_to((i * (CELL_SIZE + 1) + 1) as f64, 0_f64);
-        ctx.line_to((i * (CELL_SIZE + 1) + 1) as f64, ((CELL_SIZE + 1) * 2 * height + 1) as f64);
-    }
-
-    // Horizontal lines
-    for i in 0..=(2*height) {
-        ctx.move_to(0_f64, (i * (CELL_SIZE + 1) + 1) as f64);
-        ctx.line_to(2_f64 * ((CELL_SIZE + 1) * width + 1) as f64, (i * (CELL_SIZE + 1) + 1) as f64);
-    }
-
-    ctx.stroke();
-}
